@@ -1,0 +1,105 @@
+import matplotlib.pyplot as plt
+from  matplotlib.colors import ListedColormap
+import numpy as np
+import csv
+import copy
+
+def makePlot(labels, winPct, gamesPlayed, goodColor="#FF0000", midColor="#FFFF00", badColor="#00FF00"):
+    print(winPct)
+    cmap=ListedColormap([badColor, midColor, goodColor])
+    cmap.set_under('gray')
+    cmap.set_over('black')
+    fig, ax = plt.subplots()
+
+    ax.pcolor(winPct, edgecolors='k', cmap=cmap, linewidths=1, vmin=0, vmax=1)
+
+    for j, row in enumerate(gamesPlayed):
+        for i, txt in enumerate(row):
+            x_offset = 0.525 - 0.05*(len(txt))
+            ax.annotate(txt, (i+x_offset, j+0.575))
+
+    ax.invert_yaxis()
+    xticks = []
+    yticks = []
+    count = 0
+    for _ in labels:
+        xticks.append(count+0.5)
+        yticks.append(count+0.5)
+        count += 1
+    ax.set(xticks=xticks, xticklabels=labels)
+    ax.set(yticks=yticks, yticklabels=labels)
+    ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+    ax.tick_params(axis=u'both', which=u'both',length=0)
+
+
+    ax.set_title('Win percentage', pad=40)
+    # ax.set_xlabel('Player')
+    # ax.set_ylabel('Opponent')
+    # ax.xaxis.set_label_position('top')
+
+
+
+    plt.savefig('ExamplePNG.png', bbox_inches = 'tight')
+    plt.show()
+
+def verifyCSV(filename):
+    with open (filename, 'r') as file:
+        csvreader = csv.reader(file)
+        header = next(csvreader)
+        size = len(header)-1
+        if size > 200:
+            return False
+        row_count = 0
+        for row in csvreader:
+            row_count += 1
+            if (len(row)-1 != size):
+                return False
+        if (row_count != size):
+            return False
+    return True
+
+def readCSV(filename):
+    with open (filename, 'r') as file:
+        csvreader = csv.reader(file)
+        players = next(csvreader)[1:]
+        size = len(players)
+        scores = [[] for _ in range(size)]
+        row_count = 0
+        for row in csvreader:
+            scores[row_count] = row[1:]
+            row_count += 1
+    return (players, scores)
+
+def analyzeScores(scores):
+    size = len(scores)
+    winPct = [[None for _ in range(size)] for _ in range(size)]
+    gamesPlayed = [[None for _ in range(size)] for _ in range(size)]
+    for j, row in enumerate(scores):
+        for i, score in enumerate(row):
+            score_split = score.split('-')
+            if (len(score_split) == 2):
+                wins = score_split[0]
+                losses = score_split[1]
+                if not (wins.isdigit() and losses.isdigit()):
+                    wins = 0
+                    losses = 0
+                else:
+                    wins = int(wins)
+                    losses = int(losses)
+            else:
+                wins = 0
+                losses = 0
+            thisGamesPlayed = wins+losses
+            thisWinPct = wins/thisGamesPlayed if thisGamesPlayed > 0 else -1
+            winPct[j][i] = thisWinPct
+            gamesPlayed[j][i] = thisGamesPlayed
+            if i == j:
+                winPct[j][i] = 2
+                gamesPlayed[j][i] = 0
+    return (winPct, gamesPlayed)
+
+
+(players, scores) = readCSV('ExampleData01.csv')
+scores2 = copy.deepcopy(scores)
+(winPct, gamesPlayed) = analyzeScores(scores2)
+makePlot(players, winPct, scores)
