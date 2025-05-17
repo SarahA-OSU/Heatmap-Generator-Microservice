@@ -1,11 +1,8 @@
 import matplotlib.pyplot as plt
 from  matplotlib.colors import ListedColormap
-import numpy as np
 import csv
-import copy
 
-def makePlot(labels, winPct, gamesPlayed, goodColor="#FF0000", midColor="#FFFF00", badColor="#00FF00"):
-    print(winPct)
+def makePlot(labels, winPct, scores, outputFilename, badColor="#FF0000", midColor="#FFFF00", goodColor="#00FF00"):
     cmap=ListedColormap([badColor, midColor, goodColor])
     cmap.set_under('gray')
     cmap.set_over('black')
@@ -13,7 +10,7 @@ def makePlot(labels, winPct, gamesPlayed, goodColor="#FF0000", midColor="#FFFF00
 
     ax.pcolor(winPct, edgecolors='k', cmap=cmap, linewidths=1, vmin=0, vmax=1)
 
-    for j, row in enumerate(gamesPlayed):
+    for j, row in enumerate(scores):
         for i, txt in enumerate(row):
             x_offset = 0.525 - 0.05*(len(txt))
             ax.annotate(txt, (i+x_offset, j+0.575))
@@ -31,16 +28,13 @@ def makePlot(labels, winPct, gamesPlayed, goodColor="#FF0000", midColor="#FFFF00
     ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
     ax.tick_params(axis=u'both', which=u'both',length=0)
 
-
-    ax.set_title('Win percentage', pad=40)
+    # ax.set_title('Win percentage', pad=40)
     # ax.set_xlabel('Player')
     # ax.set_ylabel('Opponent')
     # ax.xaxis.set_label_position('top')
 
-
-
-    plt.savefig('ExamplePNG.png', bbox_inches = 'tight')
-    plt.show()
+    plt.savefig(outputFilename, bbox_inches = 'tight')
+    # plt.show()
 
 def verifyCSV(filename):
     with open (filename, 'r') as file:
@@ -98,8 +92,11 @@ def analyzeScores(scores):
                 gamesPlayed[j][i] = 0
     return (winPct, gamesPlayed)
 
-
-(players, scores) = readCSV('ExampleData01.csv')
-scores2 = copy.deepcopy(scores)
-(winPct, gamesPlayed) = analyzeScores(scores2)
-makePlot(players, winPct, scores)
+def handle_request(inFilename, outFilename):
+    if not verifyCSV(inFilename):
+        return(False, "Error with input file.")
+    else:
+        (players, scores) = readCSV(inFilename)
+        (winPct, gamesPlayed) = analyzeScores(scores)
+        makePlot(players, winPct, scores, outFilename)
+        return(True, "See OutputChart.png for plotted data.")
