@@ -2,18 +2,25 @@ import matplotlib.pyplot as plt
 from  matplotlib.colors import ListedColormap
 import csv
 
-def makePlot(labels, winPct, scores, outputFilename, badColor="#FF0000", midColor="#FFFF00", goodColor="#00FF00"):
+def makePlot(labels, winPct, scores, outputFilename, goodColor="#00FF00", midColor="#FFFF00", badColor="#FF0000"):
+    plotSize = len(labels)
+
     cmap=ListedColormap([badColor, midColor, goodColor])
     cmap.set_under('gray')
     cmap.set_over('black')
     fig, ax = plt.subplots()
 
+    plotFontSize = 15 if plotSize < 15 else 250//len(labels)
+    plt.rcParams.update({'font.size': plotFontSize})
+
     ax.pcolor(winPct, edgecolors='k', cmap=cmap, linewidths=1, vmin=0, vmax=1)
 
-    for j, row in enumerate(scores):
-        for i, txt in enumerate(row):
-            x_offset = 0.525 - 0.05*(len(txt))
-            ax.annotate(txt, (i+x_offset, j+0.575))
+    # UNCOMMENT FOR TEXT IN BOX
+    if plotSize <= 10:
+        for j, row in enumerate(scores):
+            for i, txt in enumerate(row):
+                x_offset = 0.5 - 0.05*(len(txt))*(plotSize/5)
+                ax.annotate(txt, xy=(i+x_offset, j+0.575), fontsize=plotFontSize-3)
 
     ax.invert_yaxis()
     xticks = []
@@ -23,10 +30,12 @@ def makePlot(labels, winPct, scores, outputFilename, badColor="#FF0000", midColo
         xticks.append(count+0.5)
         yticks.append(count+0.5)
         count += 1
+    plt.xticks(fontsize = plotFontSize)
     ax.set(xticks=xticks, xticklabels=labels)
     ax.set(yticks=yticks, yticklabels=labels)
     ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
-    ax.tick_params(axis=u'both', which=u'both',length=0)
+    ax.tick_params(axis=u'both', which=u'both',length=0, labelsize=plotFontSize)
+    ax.tick_params(axis='x', labelrotation=90)
 
     # ax.set_title('Win percentage', pad=40)
     # ax.set_xlabel('Player')
@@ -92,11 +101,17 @@ def analyzeScores(scores):
                 gamesPlayed[j][i] = 0
     return (winPct, gamesPlayed)
 
-def handle_request(inFilename, outFilename):
+def handle_request(inFilename, outFilename, colorString=''):
     if not verifyCSV(inFilename):
         return(False, "Error with input file.")
     else:
         (players, scores) = readCSV(inFilename)
         (winPct, gamesPlayed) = analyzeScores(scores)
-        makePlot(players, winPct, scores, outFilename)
+        if colorString == '':
+            makePlot(players, winPct, scores, outFilename)
+        else:
+            goodColor = colorString[:7]
+            midColor = colorString[8:15]
+            badColor = colorString[16:23]
+            makePlot(players, winPct, scores, outFilename, goodColor, midColor, badColor)
         return(True, "See OutputChart.png for plotted data.")

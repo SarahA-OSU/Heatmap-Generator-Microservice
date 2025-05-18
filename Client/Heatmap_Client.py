@@ -2,7 +2,8 @@ import socket
 import os
 import time
 
-HOST = '3.131.47.90'
+# HOST = '3.131.47.90'
+HOST = 'localhost'
 UPLOAD_PORT = 5555
 REQUEST_PORT = 5556
 SEPERATOR = "<SEPARATOR>"
@@ -30,14 +31,19 @@ def uploadFile(socket, requestFileName):
             # we use sendall to assure transimission in busy networks
             socket.sendall(bytes_read)
 
-def requestHeatmap(socket, requestFileName):
+def requestHeatmap(socket, requestFileName, colorString):
     # Request that the server make a heatmap
-    socket.send(f"{requestFileName}".encode())
+    socket.send(f"{requestFileName}{SEPERATOR}{colorString}".encode())
 
     # Receive some confirmation back from service that it will generate heat map with these inputs
     return socket.recv(1024).decode()
 
 def receiveFile(socket, newFilename):
+
+    received = socket.recv(1024).decode()
+    if received[:2] != '00':
+        print(received[3:])
+        return
 
     received = socket.recv(BUFFER_SIZE).decode()
     filename, filesize = received.split(SEPERATOR)
@@ -54,15 +60,16 @@ def receiveFile(socket, newFilename):
             f.write(bytes_read)
     return
 
-def getHeatmap(dataFile, imageFileName):
+def getHeatmap(dataFile, imageFileName, colorString = ''):
     uploadSocket = initSocket(UPLOAD_PORT)
     uploadFile(uploadSocket, dataFile)
     uploadSocket.close()
 
     requestSocket = initSocket(REQUEST_PORT)
-    print(requestHeatmap(requestSocket, dataFile))
+    print(requestHeatmap(requestSocket, dataFile, colorString)[3:])
     receiveFile(requestSocket,imageFileName)
     requestSocket.close()
 
 if __name__ == "__main__":
-    getHeatmap("ExampleData01.csv", "ReturnedImage.png")
+    #getHeatmap("ExampleData01.csv", "ReturnedImage.png", "#BB00BB #BB88BB #FFFFFF")
+    getHeatmap("ExampleData02.csv", "ReturnedImage.png")

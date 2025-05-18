@@ -34,19 +34,26 @@ print("Socket listening")
 while True:
     client_socket, addr = s.accept()
     try:
-        requestedInputFilename = client_socket.recv(1024).decode()
+        received = client_socket.recv(1024).decode()
+        requestedInputFilename, requestColorString = received.split(SEPERATOR)
+
         print(f"Trying to make a heatmap for {requestedInputFilename}")
 
         if os.path.exists(requestedInputFilename):
-            client_socket.send('Creating heatmap.'.encode())
-            Heatmap_Generator.handle_request(requestedInputFilename, "Output.png")
-            send_file(client_socket, "Output.png")
+            client_socket.send('00 Creating heatmap.'.encode())
+            result = Heatmap_Generator.handle_request(requestedInputFilename, "Output.png", requestColorString)
+            if result[0]:
+                client_socket.send('00 Created heatmap.'.encode())
+                send_file(client_socket, "Output.png")
+            else:
+                reply = '02 Could not create heatmap: Error: ' + result[1]
+                client_socket.send(reply.encode())
 
             # Delete local files
             os.remove(requestedInputFilename)
             os.remove("Output.png")
         else:
-            client_socket.send('I do not have this file.'.encode())
+            client_socket.send('01 I do not have this file.'.encode())
 
     finally:
         client_socket.close()
