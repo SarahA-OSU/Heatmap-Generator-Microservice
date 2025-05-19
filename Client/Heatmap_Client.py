@@ -13,10 +13,10 @@ MESSAGE_SIZE = 1024
 def pad_string(text, length=MESSAGE_SIZE, char=' '):
     return text.ljust(length, char)
 
-def initSocket(port):
+def initUploadSocket():
     s = socket.socket()
-    print(f"Connecting to {HOST}:{port}")
-    s.connect((HOST, port))
+    print(f"Connecting to {HOST}:{UPLOAD_PORT}")
+    s.connect((HOST, UPLOAD_PORT))
     print(f"Connected")
     return s
 
@@ -36,21 +36,30 @@ def uploadFile(socket, requestFileName):
             # we use sendall to assure transimission in busy networks
             socket.sendall(bytes_read)
 
+def initRequestSocket():
+    s = socket.socket()
+    print(f"Connecting to {HOST}:{REQUEST_PORT}")
+    s.connect((HOST, REQUEST_PORT))
+    print(f"Connected")
+    return s
+
 def requestHeatmap(socket, requestFileName, colorString):
     # Request that the server make a heatmap
     message = requestFileName + SEPERATOR + colorString
     message = pad_string(message)
     socket.send(message.encode())
 
+def isReplySuccessful(socket):
     # Receive some confirmation back from service that it will generate heat map with these inputs
-    return socket.recv(MESSAGE_SIZE).decode()
+    reply = socket.recv(MESSAGE_SIZE).decode().strip()
+    if reply[:2] != '00':
+        print('Error: ' +  reply[3:])
+        return False
+    else:
+        print('Request successful')
+        return True
 
 def receiveFile(socket, newFilename):
-    received = socket.recv(MESSAGE_SIZE).decode()
-    if received[:2] != '00':
-        print(received[3:].strip())
-        return
-
     received = socket.recv(MESSAGE_SIZE).decode()
     filename, filesize = received.split(SEPERATOR)
 
@@ -66,16 +75,17 @@ def receiveFile(socket, newFilename):
             f.write(bytes_read)
     return
 
-def getHeatmap(dataFile, imageFileName, colorString = ''):
-    uploadSocket = initSocket(UPLOAD_PORT)
+def getHeatmap(dataFile, imageFileName, colorString):
+    uploadSocket = initUploadSocket()
     uploadFile(uploadSocket, dataFile)
     uploadSocket.close()
 
-    requestSocket = initSocket(REQUEST_PORT)
-    print(requestHeatmap(requestSocket, dataFile, colorString)[3:].strip())
-    receiveFile(requestSocket,imageFileName)
+    requestSocket = initRequestSocket()
+    requestHeatmap(requestSocket, dataFile, colorString)
+    if isReplySuccessful(requestSocket):
+        receiveFile(requestSocket,imageFileName)
     requestSocket.close()
 
 if __name__ == "__main__":
-    # getHeatmap("ExampleData03.csv", "ReturnedImage.png", "#00FF00 #FFFF00 #0000FF")
-    getHeatmap("ExampleData01.csv", "ReturnedImage.png")
+    # getHeatmap("ExampleData03.csv", "ReturnedImage03.png", "#00FF00 #FFFF00 #0000FF")
+    getHeatmap("ExampleData01.csv", "ReturnedImage01.png", '')

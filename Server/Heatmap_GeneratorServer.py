@@ -47,7 +47,6 @@ while True:
         print(f"Trying to make a heatmap for {requestedInputFilename}")
 
         if os.path.exists(requestedInputFilename):
-            client_socket.send(pad_string('00 Creating heatmap.').encode())
             result = Heatmap_Generator.handle_request(requestedInputFilename, "Output.png", requestColorString)
             if result[0]:
                 client_socket.send(pad_string('00 Created heatmap.').encode())
