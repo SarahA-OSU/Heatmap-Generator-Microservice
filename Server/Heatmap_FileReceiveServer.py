@@ -4,9 +4,10 @@ import os
 PORT = 5555
 SEPERATOR = "<SEPARATOR>"
 BUFFER_SIZE = 4096
+MESSAGE_SIZE = 1024
 
 def receiveFile(socket):
-    received = socket.recv(BUFFER_SIZE).decode()
+    received = socket.recv(MESSAGE_SIZE).decode()
     filename, filesize = received.split(SEPERATOR)
 
     # remove absolute path if there is
@@ -26,6 +27,7 @@ def receiveFile(socket):
             f.write(bytes_read)
 
 s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 print("I'm the server. Socket created.")
 
 s.bind(('', PORT))

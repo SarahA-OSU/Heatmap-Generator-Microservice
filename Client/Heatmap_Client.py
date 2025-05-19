@@ -2,12 +2,16 @@ import socket
 import os
 import time
 
-# HOST = '3.131.47.90'
-HOST = 'localhost'
+HOST = '3.131.47.90'
+# HOST = 'localhost'
 UPLOAD_PORT = 5555
 REQUEST_PORT = 5556
 SEPERATOR = "<SEPARATOR>"
 BUFFER_SIZE = 4096
+MESSAGE_SIZE = 1024
+
+def pad_string(text, length=MESSAGE_SIZE, char=' '):
+    return text.ljust(length, char)
 
 def initSocket(port):
     s = socket.socket()
@@ -18,8 +22,9 @@ def initSocket(port):
 
 def uploadFile(socket, requestFileName):
     fileSize = os.path.getsize(requestFileName)
-    socket.send(f"{requestFileName}{SEPERATOR}{fileSize}".encode())
-    time.sleep(0.05)
+    message = requestFileName + SEPERATOR + str(fileSize)
+    message = pad_string(message)
+    socket.send(message.encode())
 
     with open(requestFileName, "rb") as f:
         while True:
@@ -33,19 +38,20 @@ def uploadFile(socket, requestFileName):
 
 def requestHeatmap(socket, requestFileName, colorString):
     # Request that the server make a heatmap
-    socket.send(f"{requestFileName}{SEPERATOR}{colorString}".encode())
+    message = requestFileName + SEPERATOR + colorString
+    message = pad_string(message)
+    socket.send(message.encode())
 
     # Receive some confirmation back from service that it will generate heat map with these inputs
-    return socket.recv(1024).decode()
+    return socket.recv(MESSAGE_SIZE).decode()
 
 def receiveFile(socket, newFilename):
-
-    received = socket.recv(1024).decode()
+    received = socket.recv(MESSAGE_SIZE).decode()
     if received[:2] != '00':
-        print(received[3:])
+        print(received[3:].strip())
         return
 
-    received = socket.recv(BUFFER_SIZE).decode()
+    received = socket.recv(MESSAGE_SIZE).decode()
     filename, filesize = received.split(SEPERATOR)
 
     with open(newFilename, "wb") as f:
@@ -66,10 +72,10 @@ def getHeatmap(dataFile, imageFileName, colorString = ''):
     uploadSocket.close()
 
     requestSocket = initSocket(REQUEST_PORT)
-    print(requestHeatmap(requestSocket, dataFile, colorString)[3:])
+    print(requestHeatmap(requestSocket, dataFile, colorString)[3:].strip())
     receiveFile(requestSocket,imageFileName)
     requestSocket.close()
 
 if __name__ == "__main__":
-    #getHeatmap("ExampleData01.csv", "ReturnedImage.png", "#BB00BB #BB88BB #FFFFFF")
-    getHeatmap("ExampleData02.csv", "ReturnedImage.png")
+    # getHeatmap("ExampleData03.csv", "ReturnedImage.png", "#00FF00 #FFFF00 #0000FF")
+    getHeatmap("ExampleData01.csv", "ReturnedImage.png")
