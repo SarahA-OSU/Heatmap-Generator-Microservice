@@ -43,12 +43,11 @@ def uploadFile(socket, requestFileName):
 
     with open(requestFileName, "rb") as f:
         while True:
-            # read the bytes from the file
+            # read 4kB from the file
             bytes_read = f.read(BUFFER_SIZE)
             if not bytes_read:
                 # file transmitting is done
                 break
-            # we use sendall to assure transimission in busy networks
             socket.sendall(bytes_read)
 
 uploadSocket = initUploadSocket()
@@ -121,10 +120,9 @@ def receiveFile(socket, newFilename):
 
     with open(newFilename, "wb") as f:
         while True:
-            # read 1024 bytes from the socket (receive)
+            # read 4kB from the socket (receive)
             bytes_read = socket.recv(BUFFER_SIZE)
             if not bytes_read:
-                # nothing is received
                 # file transmitting is done
                 break
             # write to the file the bytes we just received
@@ -143,7 +141,9 @@ The input CSV must have the opponent names in the top row, and in the first colu
 Each cell then represents the results from these opponents competing.  
 The table should be square, though some cells may be empty.  
 
-###### TODO: Images of input data
+Examples of data input as spreadsheet and CSV files:  
+<img width="613" alt="Screenshot 2025-05-19 at 10 14 45 AM" src="https://github.com/user-attachments/assets/e3915a29-46c6-496e-8df5-9a2740f31f95" />
+<img width="384" alt="Screenshot 2025-05-19 at 11 46 41 AM" src="https://github.com/user-attachments/assets/78408e82-535b-4017-b1d5-b0f1d3b9d13c" />
 
 ##### Important input formatting requirements
 - There should be no commas at the end of rows, or extra new lines after the last row containing data.
@@ -160,8 +160,17 @@ If an empty string is sent, the microservice will use the green, yellow, red col
 
 ### Result Heatmap
 
-###### TODO: Image of heatmap
-
 The resulting heatmap has the same table format as input data.  
 Diagonal cells are displayed black, as players do not have scores against themselves.  
-If the table has 10 or fewer players, then the scores will be printed in the cells. Larger tables will not have this information in the image.  
+If the table has 10 or fewer players, then the scores will be printed in the cells. Larger tables will not have this information in the image. 
+
+Example with 5 players and default coloring:  
+![ReturnedImage01](https://github.com/user-attachments/assets/b23d054c-4363-4587-99eb-5d584fbad752)
+
+Example with 50 players and custom coloring:  
+![ReturnedImage03](https://github.com/user-attachments/assets/ab89e355-fef5-43ef-a9ab-35ae012d4875)
+
+## UML Sequence Diagram
+![Blank diagram (1)](https://github.com/user-attachments/assets/408c9af6-9855-4c7f-a9c2-3fa5362a65f9)
+
+
